@@ -11,12 +11,17 @@ def Accuracy(ignore_index=None):
 
     def accuracy(y_pred: torch.tensor,
                  y_true: torch.tensor):
-        match_ = y_pred == y_true
         
-        mask = y_true != ignore_index if ignore_index else y_true        
+        if ignore_index is not None:  
+            match_ = y_pred == y_true
+            
+            mask = y_true != ignore_index        
 
-        match_ = match_ & mask
-        return torch.sum(match_) / torch.sum(mask)
+            match_ = match_ & mask
+            return torch.sum(match_) / torch.sum(mask)
+        else:
+            match_ = y_pred == y_true
+            return torch.sum(match_) / torch.numel(match_)
     return accuracy
 
 def summary_writer(path: str,
