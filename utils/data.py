@@ -84,9 +84,9 @@ class DocSumDataset(Dataset):
                      max_tokens=self.tgt_max_token,
                      pad_id=self.tgt_pad_id)
 
-        return (torch.IntTensor(src),
-                torch.IntTensor(tgt[:-1]),
-                torch.IntTensor(tgt[1:]))
+        return (torch.LongTensor(src),
+                torch.LongTensor(tgt[:-1]),
+                torch.LongTensor(tgt[1:]))
 
 
 def get_dataloader(

@@ -7,3 +7,4 @@ evaluate
 rouge_score
 SentencePiece
 torchmetrics
+py7zr
