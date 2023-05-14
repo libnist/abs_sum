@@ -269,3 +269,32 @@ class MHABlock(nn.Module):
 
         # Performing residual connection and layer normalization.
         return self.layer_norm(output + query)
+
+class FnetBlock(nn.Module):
+    def __init__(self,
+                 output_dim: int,
+                 dropout: float) -> torch.nn.Module:
+        """Returns the Fnet Block.
+
+        Args:
+            output_dim (int): Dimension of the model.
+            dropout (float): Dropout rate.
+
+        Returns:
+            torch.nn.Module: PyTorch Module.
+        """
+        super(FnetBlock, self).__init__()
+
+        # Create a dropoutlayer
+        self.dropout = nn.Dropout(p=dropout)
+
+        # Creating the layer norm module.
+        self.layer_norm = nn.LayerNorm(normalized_shape=output_dim)
+
+    def forward(self,
+                x: torch.tensor) -> torch.tensor:
+        # Performing the fft2d and it's dropout.
+        output = self.dropout(torch.real(torch.fft.fft2(x)))
+
+        # Performing the residual connection and layer normalization.
+        return self.layer_norm(output + x)

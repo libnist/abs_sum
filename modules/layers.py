@@ -2,7 +2,10 @@ import torch
 from torch import nn
 import torch.nn.functional as F
 
-from .blocks import LightConvBlock, MLPBlock, MHABlock
+from .blocks import (LightConvBlock,
+                     MLPBlock,
+                     MHABlock,
+                     FnetBlock)
 
 class LightConvEncoderLayer(nn.Sequential):
     def __init__(self,
@@ -59,3 +62,34 @@ class LightConvDecoderLayer(nn.Module):
                           key=encoder_out,
                           value=encoder_out)
         return self.mlp(output)
+    
+class FnetEncoderLayer(nn.Module):
+    def __init__(self,
+                 model_dim: int,
+                 extend_dim: int,
+                 dropout: float = .5) -> torch.nn.Module:
+        """Returns an encoder layer comprised of FnetBlock.
+
+        Args:
+            model_dim (int): Dimension of the model.
+            extend_dim (int): Dimension of the first linear layer in MLP block.
+            dropout (float, optional): Dropout rate. Defaults to .5.
+        Returns:
+            FnetEncoderLayer: torch.nn.Module
+        """
+        super().__init__()
+
+        self.fnet_block = FnetBlock(
+            output_dim=model_dim,
+            dropout=dropout)
+
+        self.mlp_block = MLPBlock(extend_dim=extend_dim,
+                                  output_dim=model_dim)
+
+    def forward(self,
+                x: torch.tensor) -> torch.tensor:
+        # Pass the input through FnetBlock.
+        output = self.fnet_block(x)
+
+        # Pass the input through MLP block.
+        return self.mlp_block(output)
