@@ -182,7 +182,8 @@ class LightConvBlock(nn.Module):
 class MLPBlock(nn.Module):
     def __init__(self,
                  extend_dim: int,
-                 output_dim: int) -> torch.nn.Module:
+                 output_dim: int,
+                 dropout: int = 0.1) -> torch.nn.Module:
         """Return the MLP block.
 
         Args:
@@ -200,6 +201,7 @@ class MLPBlock(nn.Module):
             nn.Linear(in_features=output_dim,
                       out_features=extend_dim),
             nn.ReLU(),
+            nn.Dropout(dropout)
         )
 
         # Creating the output linear layer.
@@ -294,7 +296,7 @@ class FnetBlock(nn.Module):
     def forward(self,
                 x: torch.tensor) -> torch.tensor:
         # Performing the fft2d and it's dropout.
-        output = self.dropout(torch.real(torch.fft.fft2(x)))
+        output = self.dropout(torch.fft.fft(torch.fft.fft(x, dim=-1), dim=-2).real)
 
         # Performing the residual connection and layer normalization.
         return self.layer_norm(output + x)

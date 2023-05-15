@@ -28,7 +28,8 @@ class LightConvEncoderLayer(nn.Sequential):
         
         self.add_module("MLP",
                         MLPBlock(extend_dim=dim_feedforward,
-                                 output_dim=d_model))
+                                 output_dim=d_model,
+                                 dropout=dropout))
         
 class LightConvDecoderLayer(nn.Module):
     def __init__(self,
@@ -51,7 +52,8 @@ class LightConvDecoderLayer(nn.Module):
                             dropout=dropout)
         
         self.mlp = MLPBlock(extend_dim=dim_feedforward,
-                            output_dim=d_model)
+                            output_dim=d_model,
+                            dropout=dropout)
         
     def forward(self,
                 x: torch.tensor,
@@ -86,7 +88,8 @@ class FnetEncoderLayer(nn.Module):
             dropout=dropout)
 
         self.mlp_block = MLPBlock(extend_dim=extend_dim,
-                                  output_dim=model_dim)
+                                  output_dim=model_dim,
+                                  dropout=dropout)
 
     def forward(self,
                 x: torch.tensor) -> torch.tensor:
