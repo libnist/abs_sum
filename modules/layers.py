@@ -55,12 +55,14 @@ class LightConvDecoderLayer(nn.Module):
         
     def forward(self,
                 x: torch.tensor,
-                encoder_out: torch.tensor):
+                encoder_out: torch.tensor,
+                attn_mask: torch.tensor = None):
         
         output = self.light_conv(x)
         output = self.mha(query=output,
                           key=encoder_out,
-                          value=encoder_out)
+                          value=encoder_out,
+                          attn_mask=attn_mask)
         return self.mlp(output)
     
 class FnetEncoderLayer(nn.Module):

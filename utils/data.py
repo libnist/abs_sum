@@ -39,14 +39,6 @@ def get_count_data(dataset: datasets.arrow_dataset.Dataset,
     return dataset.map(count_tokens)
 
 
-def to_max(input_ids, max_tokens, pad_id):
-    if len(input_ids) > max_tokens:
-        return input_ids[:max_tokens]
-    else:
-        difference = max_tokens - len(input_ids)
-        return input_ids + ([pad_id] * difference)
-
-
 class DocSumDataset(Dataset):
 
     def __init__(self,
@@ -65,54 +57,89 @@ class DocSumDataset(Dataset):
 
         self.src_tokenizer = src_tokenizer
         self.tgt_tokenizer = tgt_tokenizer
-
+        
         self.src_max_token = src_max_token
         self.tgt_max_token = tgt_max_token
-
-        self.src_pad_id = src_tokenizer.token_to_id("<pad>")
-        self.tgt_pad_id = tgt_tokenizer.token_to_id("<pad>")
 
     def __len__(self):
         return len(self.src)
 
     def __getitem__(self, i):
-        src = to_max(input_ids=self.src_tokenizer.encode(self.src[i])[0],
-                     max_tokens=self.src_max_token,
-                     pad_id=self.src_pad_id)
+        src = self.src_tokenizer.encode(self.src[i])[0]
 
-        tgt = to_max(input_ids=self.tgt_tokenizer.encode(self.tgt[i])[0],
-                     max_tokens=self.tgt_max_token,
-                     pad_id=self.tgt_pad_id)
+        tgt = self.tgt_tokenizer.encode(self.tgt[i])[0]
 
-        return (torch.LongTensor(src),
-                torch.LongTensor(tgt[:-1]),
-                torch.LongTensor(tgt[1:]))
+        return (src[:self.src_max_token],
+                tgt[:self.tgt_max_token][:-1],
+                tgt[:self.tgt_max_token][1:])
+        
+def max_of_lens(lists):
+    return max(map(lambda x: len(x), lists))
+
+def to_max(input_ids, max_tokens, pad_id):
+    if len(input_ids) > max_tokens:
+        return input_ids[:max_tokens]
+    else:
+        difference = max_tokens - len(input_ids)
+        return input_ids + ([pad_id] * difference)
+        
+def get_collate(src_pad_id=0, tgt_pad_id=0):
+    
+    def collate_fn(batch):
+        src = []
+        tgt_in = []
+        tgt_out = []
+        
+        for i in range(len(batch)):
+            src.append(batch[i][0])
+            tgt_in.append(batch[i][1])
+            tgt_out.append(batch[i][2])
+        
+        src_max_len = max_of_lens(src)
+        tgt_in_max_len = max_of_lens(tgt_in)
+        tgt_out_max_len = max_of_lens(tgt_out)
+        
+        src = [to_max(item, src_max_len, src_pad_id) for item in src]
+        tgt_in = [to_max(item, tgt_in_max_len, tgt_pad_id) for item in tgt_in]
+        tgt_out = [to_max(item, tgt_out_max_len, tgt_pad_id) for item in tgt_out]
+        
+        return (
+            torch.LongTensor(src),
+            torch.LongTensor(tgt_in),
+            torch.LongTensor(tgt_out)
+        )
+    return collate_fn
 
 
 def get_dataloader(
     src: list,
     tgt: list,
-    src_max_tokens: int,
-    tgt_max_tokens: int,
     src_tokenizer: CustomTokenizer,
     tgt_tokenizer: CustomTokenizer,
+    src_max_token: int,
+    tgt_max_token: int,
     batch_size: int,
     num_workers: int = os.cpu_count(),
     shuffle: bool = False
 ):
+    
+    src_pad_id = src_tokenizer.token_to_id("<pad>")
+    tgt_pad_id = tgt_tokenizer.token_to_id("<pad>")
+    
     os.environ["TOKENIZERS_PARALLELISM"] = "true"
     dataset = DocSumDataset(
         src=src,
         tgt=tgt,
-        src_max_token=src_max_tokens,
-        tgt_max_token=tgt_max_tokens,
+        src_max_token=src_max_token,
+        tgt_max_token=tgt_max_token,
         src_tokenizer=src_tokenizer,
         tgt_tokenizer=tgt_tokenizer
     )
     dataloader = DataLoader(dataset,
                             batch_size=batch_size,
                             shuffle=shuffle,
-                            num_workers=num_workers)
+                            num_workers=num_workers,
+                            collate_fn=get_collate(src_pad_id, tgt_pad_id))
     return dataloader
 
 
