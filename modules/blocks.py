@@ -300,3 +300,27 @@ class FnetBlock(nn.Module):
 
         # Performing the residual connection and layer normalization.
         return self.layer_norm(output + x)
+   
+class Permute(nn.Module):
+
+  def forward(self, x):
+    return x.permute(0, 2, 1)
+
+class DepthWiseSeparableConv1d(nn.Sequential):
+  def __init__(self, d_model, kernel_size, stride):
+    super().__init__()
+    self.add_module("perm",
+                    Permute())
+    self.add_module("depthwise",
+                    nn.Conv1d(in_channels=d_model,
+                              out_channels=d_model,
+                              kernel_size=kernel_size,
+                              stride=stride,
+                              groups=d_model))
+    self.add_module("pointwise",
+                    nn.Conv1d(in_channels=d_model,
+                              out_channels=d_model,
+                              kernel_size=1,
+                              stride=1))
+    self.add_module("perm2",
+                    Permute())
