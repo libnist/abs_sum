@@ -307,7 +307,7 @@ class Permute(nn.Module):
     return x.permute(0, 2, 1)
 
 class DepthWiseSeparableConv1d(nn.Sequential):
-  def __init__(self, d_model, kernel_size, stride):
+  def __init__(self, d_model, kernel_size, stride, dilation=1):
     super().__init__()
     self.add_module("perm",
                     Permute())
@@ -316,7 +316,8 @@ class DepthWiseSeparableConv1d(nn.Sequential):
                               out_channels=d_model,
                               kernel_size=kernel_size,
                               stride=stride,
-                              groups=d_model))
+                              groups=d_model,
+                              dilation=dilation))
     self.add_module("pointwise",
                     nn.Conv1d(in_channels=d_model,
                               out_channels=d_model,
