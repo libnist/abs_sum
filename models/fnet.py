@@ -58,6 +58,10 @@ class FnetModel(nn.Module):
         # Create the output layer
         self.output_layer = nn.Linear(in_features=model_dim,
                                       out_features=tgt_vs)
+        
+        for param in self.parameters():
+            if param.dim() > 1:
+                nn.init.xavier_uniform_(param)
 
     def forward(self,
                 doc_tokens: torch.tensor,
