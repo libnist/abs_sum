@@ -149,6 +149,10 @@ class UFnetModel(nn.Module):
         self.output_layer = nn.Linear(in_features=model_dim,
                                       out_features=tgt_vs)
         
+        for param in self.parameters():
+            if param.dim() > 1:
+                nn.init.xavier_uniform_(param)
+        
     def key_paddding_mask(self, input, pad_id, device):
         return (input == pad_id).to(device)
 
