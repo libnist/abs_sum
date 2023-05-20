@@ -296,3 +296,84 @@ class UFnetConvModel(nn.Module):
                              tgt_key_padding_mask=tgt_key_padding_mask)
 
         return self.output_layer(output)
+
+class UFnetSharedModel(nn.Module):
+    def __init__(self,
+                 model_dim: int,
+                 n_head: int,
+                 dim_feedforward: int,
+                 num_layers: int,
+                 vs: int,
+                 padding_index: int,
+                 dropout: float = 0.1) -> nn.Module:
+        super().__init__()
+
+        self.padding_index = padding_index
+
+        self.embedding = TripleEmbeddingBlock(
+            num_word_embeddings=vs,
+            embedding_dim=model_dim,
+            padding_index=padding_index,
+        )
+
+        # Create the FnetCNNEncoder
+        self.encoders = nn.ModuleList(
+            [FnetEncoderLayer(model_dim=model_dim,
+                              extend_dim=dim_feedforward,
+                              dropout=dropout)
+             for _ in range(num_layers)]
+        )
+
+        self.decoders = nn.ModuleList(
+            [nn.TransformerDecoderLayer(d_model=model_dim,
+                                        nhead=n_head,
+                                        dim_feedforward=dim_feedforward,
+                                        dropout=dropout,
+                                        batch_first=True)
+             for _ in range(num_layers)]
+        )
+
+        # Create the output layer
+        self.output_layer = nn.Linear(in_features=model_dim,
+                                      out_features=vs)
+        
+        for param in self.parameters():
+            if param.dim() > 1:
+                nn.init.xavier_uniform_(param)
+        
+    def key_paddding_mask(self, input, pad_id, device):
+        return (input == pad_id).to(device)
+
+    def forward(self,
+                src: torch.tensor,
+                tgt: torch.tensor) -> torch.tensor:
+
+        device = src.device
+
+        tgt_mask = get_attn_mask(tgt.shape[-1],
+                                 device)
+
+        tgt_key_padding_mask = self.key_paddding_mask(tgt,
+                                                      self.padding_index,
+                                                      device=device)
+
+        enc_embeds = self.embedding(src)
+        dec_embeds = self.embedding(tgt)
+
+        enc_outs = [self.encoders[0](enc_embeds)]
+
+        for encoder in self.encoders[1:]:
+            enc_outs.append(encoder(enc_outs[-1]))
+
+        output = self.decoders[0](tgt=dec_embeds,
+                                  memory=enc_outs[0],
+                                  tgt_mask=tgt_mask,
+                                  tgt_key_padding_mask=tgt_key_padding_mask)
+
+        for i, decoder in enumerate(self.decoders[1:]):
+            output = decoder(tgt=output,
+                             memory=enc_outs[i+1],
+                             tgt_mask=tgt_mask,
+                             tgt_key_padding_mask=tgt_key_padding_mask)
+
+        return self.output_layer(output)
