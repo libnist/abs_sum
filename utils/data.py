@@ -10,10 +10,13 @@ from typing import List, Dict
 import torch
 from torch.utils.data import Dataset, DataLoader
 import os
+from random import randint
 
 # Drawing imports
 import matplotlib.pyplot as plt
 import numpy as np
+
+from typing import Tuple
 
 
 def get_data(path: str,
@@ -43,7 +46,7 @@ class DocSumDataset(Dataset):
 
     def __init__(self,
                  src: list,
-                 tgt: list,
+                 tgt: list | Tuple[list],
                  src_tokenizer: CustomTokenizer,
                  tgt_tokenizer: CustomTokenizer,
                  src_max_token: int,
@@ -51,7 +54,10 @@ class DocSumDataset(Dataset):
 
         if len(src) != len(tgt):
             raise ValueError(f"Length of src is not equal to length of tgt")
-
+        
+        if isinstance(tgt, tuple):
+            self.num_tgt = len(tgt)
+        
         self.src = src
         self.tgt = tgt
 
@@ -65,9 +71,18 @@ class DocSumDataset(Dataset):
         return len(self.src)
 
     def __getitem__(self, i):
-        src = self.src_tokenizer.encode(self.src[i])[0]
-
-        tgt = self.tgt_tokenizer.encode(self.tgt[i])[0]
+        
+        src = self.src[i]
+        
+        src = self.src_tokenizer.encode(src)[0]
+        
+        if hasattr(self, "num_tgt"):
+            from_tgt = randint(0, self.num_tgt)
+            tgt = self.tgt[from_tgt][i]
+        else:
+            tgt = self.tgt[i]
+            
+        tgt = self.tgt_tokenizer.encode(tgt)[0]
 
         return (src[:self.src_max_token],
                 tgt[:self.tgt_max_token][:-1],
