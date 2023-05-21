@@ -305,10 +305,12 @@ class UFnetSharedModel(nn.Module):
                  num_layers: int,
                  vs: int,
                  padding_index: int,
-                 dropout: float = 0.1) -> nn.Module:
+                 dropout: float = 0.1,
+                 reverse_encoder: bool = False) -> nn.Module:
         super().__init__()
 
         self.padding_index = padding_index
+        self.reverse_encoder = reverse_encoder
 
         self.embedding = TripleEmbeddingBlock(
             num_word_embeddings=vs,
@@ -364,6 +366,9 @@ class UFnetSharedModel(nn.Module):
 
         for encoder in self.encoders[1:]:
             enc_outs.append(encoder(enc_outs[-1]))
+            
+        if self.reverse_encoder:
+            enc_outs = enc_outs[::-1]
 
         output = self.decoders[0](tgt=dec_embeds,
                                   memory=enc_outs[0],
