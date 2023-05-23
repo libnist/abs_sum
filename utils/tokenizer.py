@@ -190,5 +190,6 @@ class PretrainedCustomTokenizer:
     def vocab_size(self):
         return self._tokenizer.vocab_size
     
+    @property
     def pad_token_id(self):
         return self._tokenizer.pad_token_id

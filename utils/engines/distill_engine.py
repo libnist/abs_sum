@@ -144,7 +144,7 @@ def test_step(teacher: torch.nn.Module,
                             z.reshape(-1)) * 0.3
             
             loss = f_loss + r_loss + h_loss ## these should be weighted
-            train_loss += loss.item()
+            eval_loss += loss.item()
 
             # [batch_size, summary_token_length]
             preds = student_logits.softmax(dim=-1).argmax(dim=-1)
