@@ -9,7 +9,7 @@ from collections import defaultdict
 
 import pathlib
 
-from .save_and_load import save_model
+from ..save_and_load import save_model
 
 import wandb
 
