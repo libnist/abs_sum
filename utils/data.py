@@ -51,12 +51,14 @@ class DocSumDataset(Dataset):
                  tgt_tokenizer: CustomTokenizer,
                  src_max_token: int,
                  tgt_max_token: int):
-
-        if len(src) != len(tgt):
-            raise ValueError(f"Length of src is not equal to length of tgt")
         
+        len_tgt = len(tgt)
         if isinstance(tgt, tuple):
-            self.num_tgt = len(tgt)
+            self.num_tgt = len(tgt) - 1
+            len_tgt = len(tgt[0])
+
+        if len(src) != len_tgt:
+            raise ValueError(f"Length of src is not equal to length of tgt")
         
         self.src = src
         self.tgt = tgt

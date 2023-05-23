@@ -8,6 +8,8 @@ from tokenizers import (
     Tokenizer
 )
 
+from transformers import AutoTokenizer
+
 from tqdm.auto import tqdm
 import re
 import numpy as np
@@ -168,3 +170,14 @@ class CustomTokenizer:
     @property
     def vocab_size(self):
         return self._tokenizer.get_vocab_size()
+
+class PretrainedCustomTokenizer:
+  def __init__(self, name):
+    self._tokenizer = AutoTokenizer.from_pretrained(name)
+
+  def encode(self, input):
+    output = self._tokenizer(input)
+    return output["input_ids"], output["attention_mask"]
+
+  def decode(self, input):
+    return self._tokenizer.decode(input, skip_special_tokens=True)
