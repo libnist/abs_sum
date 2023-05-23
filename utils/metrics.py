@@ -12,7 +12,7 @@ class KLDivLoss(nn.Module):
   def forward(self, y_pred, y_true):
     y_pred = F.log_softmax(y_pred / self.t, dim=-1)
     y_true = F.softmax(y_true / self.t, dim=-1)
-    return self.kldiv(y_pred, y_true) * (self.t ** 2) / y_pred.shape[0]
+    return self. alpha * self.kldiv(y_pred, y_true) * (self.t ** 2) / y_pred.shape[0]
 
 class ZeroLoss(nn.Module):
     def __init__(self, device):

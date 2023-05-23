@@ -1,4 +1,4 @@
-from transformer import AutoModelForSeq2SeqLM
+from transformers import AutoModelForSeq2SeqLM
 
 from ..models import get_attn_mask
 
@@ -14,8 +14,12 @@ class PretrainedModel:
                tgt):
     output = self.model(input_ids=src,
                         decoder_input_ids=tgt,
-                        attention_mask=src==self.pad_id,
-                        decoder_attention_mask=tgt==self.pad_id,
-                        cross_attn_head_mask=get_attn_mask(tgt.shape[-1],
-                                                           tgt.device))
+                        # attention_mask=src==self.pad_id,
+                        # decoder_attention_mask=tgt==self.pad_id,
+                        # cross_attn_head_mask=get_attn_mask(tgt.shape[-1],
+                        #                                    tgt.device)
+                        )
     return output.encoder_last_hidden_state, output.logits
+  
+  def eval(self):
+    self.model.eval()

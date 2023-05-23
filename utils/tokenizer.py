@@ -18,7 +18,7 @@ from typing import List, Tuple
 
 
 class CustomTokenizer:
-    def __init__(self, 
+    def __init__(self,
                  vocab_size: int = 32000) -> Tokenizer:
         """Creates a WordPiece tokenizer and trains it based on given corpus
         and vocab_size.
@@ -41,12 +41,12 @@ class CustomTokenizer:
         # Create a trainer
         special_tokens = ["<pad>", "<start>", "<end>", "<sep>", "<unk>"]
         self._trainer = trainers.WordPieceTrainer(
-            vocab_size=vocab_size, 
+            vocab_size=vocab_size,
             special_tokens=special_tokens)
-        
+
         # Add a decoder to the tokenizer
         self._tokenizer.decoder = decoders.WordPiece(prefix="##")
-        
+
     def _set_post_processor(self):
         # Adding the post_processor to the tokenizer
         self._start_token_id = self._tokenizer.token_to_id("<start>")
@@ -59,15 +59,16 @@ class CustomTokenizer:
                             ("<end>", self._end_token_id),
                             ("<sep>", self._sep_token_id)]
         )
-    def get_training_corpus(self, 
-                            training_dataset:list,
-                            batch_size:int):
+
+    def get_training_corpus(self,
+                            training_dataset: list,
+                            batch_size: int):
         for i in tqdm(range(0, len(training_dataset), batch_size)):
             yield training_dataset[i:i+batch_size]
-            
-    def fit(self, 
-            training_dataset:List[str], 
-            batch_size:int=10000):
+
+    def fit(self,
+            training_dataset: List[str],
+            batch_size: int = 10000):
         """Train the tokenizer given the training corpus.
 
         Args:
@@ -81,20 +82,19 @@ class CustomTokenizer:
             trainer=self._trainer
         )
         self._set_post_processor()
-        
 
     def save(self,
-             path:str):
+             path: str):
         """Save the tokenzier.
 
         Args:
             path (str): Path to save the tokenzier into a .json file.
         """
         self._tokenizer.save(path)
-    
+
     @classmethod
     def load(cls,
-             path:str):
+             path: str):
         """Load a trained tokenizer.
 
         Args:
@@ -104,9 +104,9 @@ class CustomTokenizer:
         tokenizer._tokenizer = Tokenizer.from_file(path)
         tokenizer._set_post_processor()
         return tokenizer
-        
+
     def get_type_ids(self,
-                     ids:List[int]) -> list:
+                     ids: List[int]) -> list:
         """Return type_ids from list of ids.
 
         Args:
@@ -116,7 +116,7 @@ class CustomTokenizer:
             _type_: list
         """
         ids = np.array(ids)
-        sep_indices = np.where(ids==self._sep_token_id)[0]
+        sep_indices = np.where(ids == self._sep_token_id)[0]
         if len(sep_indices) == 0:
             type_ids = [0] * len(ids)
         else:
@@ -127,9 +127,9 @@ class CustomTokenizer:
                 type_ids += [i] * index
             type_ids += [i+1] * (len(ids) - last_index)
         return type_ids
-    
+
     def encode(self,
-               input:str) -> Tuple[List[int], List[int]]:
+               input: str) -> Tuple[List[int], List[int]]:
         """Given an string input, returns a tuple in form (ids, type_ids).
 
         Args:
@@ -142,9 +142,9 @@ class CustomTokenizer:
         input = re.sub(r"(\!|\?|\.) +([A-Z])", r"\1 <sep> \2", input)
         output = self._tokenizer.encode(input)
         return output.ids, self.get_type_ids(output.ids)
-    
+
     def decode(self,
-               input:List[int]) -> str:
+               input: List[int]) -> str:
         """Given ids, returns string corresponding to the ids.
 
         Args:
@@ -154,9 +154,9 @@ class CustomTokenizer:
             str: str
         """
         return self._tokenizer.decode(input)
-    
+
     def token_to_id(self,
-                    token:str) -> int:
+                    token: str) -> int:
         """Given a token, returns it's corresponding id.
 
         Args:
@@ -166,18 +166,29 @@ class CustomTokenizer:
             int: int
         """
         return self._tokenizer.token_to_id(token)
-    
+
     @property
     def vocab_size(self):
         return self._tokenizer.get_vocab_size()
+    
+    @property
+    def pad_token_id(self):
+        return self._tokenizer.token_to_id("<pad>")
+
 
 class PretrainedCustomTokenizer:
-  def __init__(self, name):
-    self._tokenizer = AutoTokenizer.from_pretrained(name)
+    def __init__(self, name):
+        self._tokenizer = AutoTokenizer.from_pretrained(name)
 
-  def encode(self, input):
-    output = self._tokenizer(input)
-    return output["input_ids"], output["attention_mask"]
+    def encode(self, input):
+        output = self._tokenizer(input)
+        return output["input_ids"], output["attention_mask"]
 
-  def decode(self, input):
-    return self._tokenizer.decode(input, skip_special_tokens=True)
+    def decode(self, input):
+        return self._tokenizer.decode(input, skip_special_tokens=True)
+    
+    def vocab_size(self):
+        return self._tokenizer.vocab_size
+    
+    def pad_token_id(self):
+        return self._tokenizer.pad_token_id

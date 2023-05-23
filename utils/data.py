@@ -140,8 +140,8 @@ def get_dataloader(
     shuffle: bool = False
 ):
     
-    src_pad_id = src_tokenizer.token_to_id("<pad>")
-    tgt_pad_id = tgt_tokenizer.token_to_id("<pad>")
+    src_pad_id = src_tokenizer.pad_token_id
+    tgt_pad_id = tgt_tokenizer.pad_token_id
     
     os.environ["TOKENIZERS_PARALLELISM"] = "true"
     dataset = DocSumDataset(
