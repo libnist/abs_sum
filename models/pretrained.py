@@ -12,8 +12,8 @@ class PretrainedModel:
   def __call__(self,
                src,
                tgt):
-    src_mask = (src == self.pad_id)
-    tgt_mask = (tgt == self.pad_id)
+    src_mask = (src != self.pad_id)
+    tgt_mask = (tgt != self.pad_id)
     output = self.model(input_ids=src,
                         decoder_input_ids=tgt,
                         attention_mask=src_mask,
