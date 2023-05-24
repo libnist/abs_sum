@@ -69,8 +69,7 @@ def train_step(teacher: torch.nn.Module,
         r_loss = response_loss(student_logits, teacher_logits)
         
         # hardLoss
-        h_loss = hard_loss(student_logits.reshape(-1, student_logits.shape[-1]),
-                           z.reshape(-1)) * 0.3
+        h_loss = hard_loss(student_logits, z)
         
         loss = f_loss + r_loss + h_loss ## these should be weighted
         train_loss += loss.item()
@@ -140,8 +139,7 @@ def test_step(teacher: torch.nn.Module,
             r_loss = response_loss(student_logits, teacher_logits)
             
             # hardLoss
-            h_loss = hard_loss(student_logits.reshape(-1, student_logits.shape[-1]),
-                            z.reshape(-1)) * 0.3
+            h_loss = hard_loss(student_logits, z)
             
             loss = f_loss + r_loss + h_loss ## these should be weighted
             eval_loss += loss.item()

@@ -12,12 +12,13 @@ class PretrainedModel:
   def __call__(self,
                src,
                tgt):
+    src_mask = (src == self.pad_id)
+    tgt_mask = (tgt == self.pad_id) & (get_attn_mask(tgt.shape[-1],
+                                                     tgt.device))
     output = self.model(input_ids=src,
                         decoder_input_ids=tgt,
-                        # attention_mask=src==self.pad_id,
-                        # decoder_attention_mask=tgt==self.pad_id,
-                        # cross_attn_head_mask=get_attn_mask(tgt.shape[-1],
-                        #                                    tgt.device)
+                        attention_mask=src_mask,
+                        decoder_attention_mask=tgt_mask
                         )
     return output.encoder_last_hidden_state, output.logits
   
