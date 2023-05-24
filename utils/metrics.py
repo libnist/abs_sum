@@ -33,11 +33,12 @@ class HardLoss(nn.Module):
                                 y_true.reshape(-1))
     
 class FeatureLoss(nn.Module):
-  def __init__(self, alpha, teacher_dim, student_dim):
+  def __init__(self, alpha, teacher_dim, student_dim, device):
     super().__init__()
     self.alpha = alpha
     self.mse = nn.MSELoss()
     self.linear = nn.Linear(teacher_dim, student_dim)
+    self.to(device)
 
   def forward(self, y_pred, y_true):
     return self.alpha * self.mse(y_pred, self.linear(y_true))
